@@ -1,0 +1,99 @@
+{
+  "name": "Error Monitoring & Alerting Pipeline",
+  "nodes": [
+    {
+      "id": "9d2ebf70-7ee7-4ea5-aa78-863aa9f19923",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "5aaa6c98-b48d-4a28-b171-85bb06fa21fe",
+      "name": "Send a text message",
+      "webhookId": "387959e5-d7cb-4a92-b150-a12bb91302e3",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "chatId": "={{.chat_id}}",
+        "text": "={{.text}}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {}
+    },
+    {
+      "id": "0b4c8b47-2582-406e-9ad6-05ca4f378440",
+      "name": "Wait",
+      "webhookId": "1a9bcdb3-c456-49af-bec6-23a92ab46655",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "e6844b4f-c79a-4ef6-83ea-6569e707bf0a",
+      "name": "Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Error Alert formatter (for Error Trigger workflow)\n// Naprawiono: CHAT_ID ustawiony na prawidlowy identyfikator administratora\nconst DEFAULT_CHAT_ID = 'YOUR_TELEGRAM_CHAT_ID';\n// ID administratora: stala konfiguracja (zmienne n8n wymagaja licencji platnej).\nconst CHAT_ID = DEFAULT_CHAT_ID;\n// Publiczny host instancji. Ustaw po wdrozeniu na VM (Oracle).\nconst INSTANCE_URL = '';\n\nfunction tsPL(d){\n  try { return new Date(d).toLocaleString('pl-PL',{ timeZone:'Europe/Warsaw', hour12:false }); }\n  catch(e){ return d || ''; }\n}\n\nconst data = $json || {};\nconst wf   = data.workflow   || {};\nconst exec = data.execution  || {};\nconst err  = data.error      || {};\nconst last = data.lastNodeExecuted || err.node?.name || err.node || '';\n\nconst errMsg =\n  err.message ||\n  err.description ||\n  err.cause?.message ||\n  (Array.isArray(err.errors) && err.errors[0]?.message) ||\n  '-';\n\nconst stackFirst = String(err.stack || err.cause?.stack || '').split('\\n')[0] || '';\nconst execUrl = (INSTANCE_URL && wf.id && exec.id) ? `${INSTANCE_URL}/workflow/${wf.id}/executions/${exec.id}` : null;\n\nconst lines = [];\nlines.push('❗️Błąd w workflow n8n');\nlines.push(`Workflow: ${wf.name || '-'} (#${wf.id || '-'})`);\nlines.push(`Execution: ${exec.id || '-'} | mode: ${exec.mode || '-'}${exec.status ? ' | status: '+exec.status : ''}`);\nif (exec.startedAt)  lines.push(`Start: ${tsPL(exec.startedAt)}`);\nif (exec.finishedAt) lines.push(`Koniec: ${tsPL(exec.finishedAt)}`);\nlines.push(`Node: ${last || '-'}`);\nlines.push(`Error: ${errMsg}`);\nif (stackFirst) lines.push(`Stack: ${stackFirst}`);\nif (execUrl)   lines.push(`🔗 ${execUrl}`);\n\nreturn [{\n  json: {\n    chat_id: CHAT_ID,\n    text: lines.join('\\n')\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
