@@ -50,6 +50,14 @@ Produkcyjny scenariusz centralnego monitoringu, obsługi wyjątków i powiadomie
 
 ---
 
+### 3. ERP (Subiekt GT), Wsparcie Operacyjne & Baza Wiedzy SOP
+* **Administracja ERP:** Nadzór nad bazą ponad **1 500 kartotek asortymentowych i kontrahentów** w systemie Subiekt GT (MSSQL), weryfikacja poprawności fakturowania, synchronizacja stanów magazynowych (WZ/PZ).
+* **Standaryzacja procesów (SOP):** Wdrożenie cyfrowej bazy wiedzy i procedur wykonawczych w Notion (diagnostyka i ponad 80 rozpatrzonych reklamacji sprzętu ze wskaźnikiem terminowości >95%, procedury eskalacji incydentów do centralnego IT).
+
+![Baza Wiedzy SOP i Procedury ERP](assets/erp_subiekt_sop_showcase.png)
+
+---
+
 ## 🛠 Stack technologiczny
 * **Języki i narzędzia:** Python 3, Bash, JavaScript (Code Nodes w n8n), SQL, Git
 * **Integracje:** n8n, REST API, Webhooks (asynchroniczne potwierdzenia ACK 202)
