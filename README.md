@@ -35,18 +35,24 @@ python cloud_instance_provisioner.py --name "worker-node-01" --ocpus 4 --memory-
 
 ---
 
-### 2. `n8n_error_alerting_workflow.json` (Orkiestracja integracji n8n)
-Produkcyjny scenariusz centralnego monitoringu, obsługi wyjątków i powiadomień telemetrycznych:
-* **Global Error Catching:** węzeł `Error Trigger` przechwytuje zdarzenia awarii z dowolnego aktywnego potoku danych w organizacji.
-* **Sanityzacja & Formatowanie (JavaScript):** węzeł `Code` parsuje błąd (nazwa węzła, timestamp w strefie `Europe/Warsaw`, identyfikator egzekucji, skrócony stack trace oraz bezpośredni odnośnik do panelu n8n).
-* **Natychmiastowe alertowanie:** przesyłanie ustrukturyzowanej wiadomości na kanał techniczny administratora (Telegram / Webhook) z automatycznym zapobieganiem pętli błędów.
+### 2. Architektura Potoków n8n & Szablon `n8n_error_alerting_workflow.json`
+Złożony ekosystem 6 zintegrowanych scenariuszy n8n (>100 węzłów) łączący REST API, bazy PostgreSQL, arkusze Google Sheets i komunikator Telegram:
 
-![Wizualizacja Pipeline n8n](assets/n8n_workflow_showcase.png)
+* **Scenariusz #2 („Analityk” - widoczny na zrzucie poniżej):** Centralny potok przetwarzania danych (37 węzłów):
+  * **Bezpieczeństwo & ACK:** Weryfikacja nagłówków autoryzacyjnych (`Auth OK?` / `Respond 401`) oraz natychmiastowa asynchroniczna odpowiedź `HTTP 202 Response (ACK)` chroniąca przed timeoutami webhooków.
+  * **Pobieranie & Transformacja:** Odpytywanie zewnętrznych REST API (`HL Matches`, `HL Odds`) z paginacją oraz normalizacja struktur obiektów JSON w JavaScript (`Code Nodes`).
+  * **Baza PostgreSQL:** Dynamiczne zapobieganie duplikatom poprzez węzeł deduplikacji i zapytania `UPSERT` w relacyjnej bazie PostgreSQL.
+  * **Multi-Sink:** Jednoczesna synchronizacja telemetrii z arkuszami Google Sheets oraz formatowanie i dystrybucja alertów na Telegramie.
+* **Scenariusz #3 (`n8n_error_alerting_workflow.json` - dołączony plik JSON):** Globalny Error Handler:
+  * Przechwytuje wyjątki z dowolnego aktywnego potoku za pomocą węzła `Error Trigger`.
+  * Formatuje payload błędu (nazwa węzła, timestamp `Europe/Warsaw`, stack trace, link do egzekucji) i wysyła natychmiastowe ostrzeżenie do administratora.
 
-#### Import do instancji n8n:
-1. Przejdź do panelu n8n i wybierz **Workflows** ➔ **Import from File**.
-2. Wybierz plik `n8n_error_alerting_workflow.json`.
-3. Ustaw zmienne środowiskowe dla bota Telegram (`CHAT_ID`, `BOT_TOKEN`).
+![Architektura potoku n8n: Scenariusz #2 Analityk (37 węzłów: Webhook, ACK 202, PostgreSQL, Google Sheets, Telegram)](assets/n8n_workflow_showcase.png)
+
+#### Import szablonu obsługi błędów do instancji n8n:
+1. W panelu n8n wybierz: **Workflows** ➔ **Import from File**.
+2. Wskaż dołączony plik `n8n_error_alerting_workflow.json`.
+3. Skonfiguruj własny identyfikator czatu (`CHAT_ID`) i token bota Telegram.
 
 ---
 
