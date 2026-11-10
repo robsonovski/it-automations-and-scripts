@@ -19,7 +19,7 @@ Autonomiczne narzędzie CLI do automatyzacji wdrożeń i provisioningu maszyn wi
 * **Weryfikacja cyklu życia:** odpytuje API o stan instancji (`lifecycle_state == 'RUNNING'`), weryfikuje przypisanie karty sieciowej (VNIC) i ekstrahuje publiczny adres IPv4.
 * **Integracja z systemem hosta:** wysyła desktopowe powiadomienia w środowisku Linux (`notify-send`) z informacją o powodzeniu operacji.
 
-#### Uruchomienie:
+#### Uruchomienie i log z wykonania:
 ```bash
 # Instalacja zależności
 pip install -r requirements.txt
@@ -30,6 +30,8 @@ python cloud_instance_provisioner.py --help
 # Uruchomienie z domyślną konfiguracją OCI (~/.oci/config)
 python cloud_instance_provisioner.py --name "worker-node-01" --ocpus 4 --memory-in-gbs 24
 ```
+
+![Log wykonania skryptu CLI](assets/python_cli_execution.png)
 
 ---
 
